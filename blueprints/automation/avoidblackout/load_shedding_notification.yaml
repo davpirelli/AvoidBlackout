@@ -1,0 +1,44 @@
+blueprint:
+  name: AvoidBlackout Notifications
+  description: Invia una notifica quando AvoidBlackout spegne un dispositivo per sovraccarico.
+  domain: automation
+  input:
+    notify_service:
+      name: Servizio Notifiche
+      description: Il servizio da usare per inviare le notifiche (es. notify.mobile_app_iphone).
+      selector:
+        text:
+    notification_title:
+      name: Titolo Notifica
+      description: Il titolo del messaggio di notifica.
+      default: "⚡ AvoidBlackout: Carico Scollegato"
+    include_power_info:
+      name: Includi info potenza
+      description: Se includere i Watt totali nel messaggio.
+      default: true
+      selector:
+        boolean:
+
+mode: parallel
+
+trigger:
+  - platform: event
+    event_type: powermanager_load_shedding
+
+action:
+  - variables:
+      include_power: !input include_power_info
+      notify_service: !input notify_service
+      notif_title: !input notification_title
+  - service: "{{ notify_service }}"
+    data:
+      title: "{{ notif_title }}"
+      message: >
+        {% set entity = trigger.event.data.entity_id %}
+        {% set power = trigger.event.data.total_power %}
+        {% set threshold = trigger.event.data.threshold %}
+        
+        Soglia superata! Ho spento: {{ state_attr(entity, 'friendly_name') or entity }}.
+        {% if include_power %}
+        Consumo totale: {{ power }}W (Soglia: {{ threshold }}W).
+        {% endif %}

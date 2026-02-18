@@ -1,0 +1,14 @@
+{
+    "entity": {
+        "sensor": {
+            "avoidblackout_status": {
+                "name": "AvoidBlackout Status",
+                "state": {
+                    "monitoring": "Monitoraggio",
+                    "waiting": "In attesa",
+                    "shedding": "Scollegamento carichi"
+                }
+            }
+        }
+    }
+}

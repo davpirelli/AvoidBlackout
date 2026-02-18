@@ -1,0 +1,18 @@
+{
+  "domain": "avoidblackout",
+  "name": "AvoidBlackout - PowerManager",
+  "codeowners": [
+    "@davpirelli"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/davpirelli/avoidblackout",
+  "iot_class": "local_push",
+  "version": "1.0.3",
+  "requirements": [],
+  "dependencies": [],
+  "after_dependencies": [
+    "template",
+    "input_number",
+    "input_boolean"
+  ]
+}
