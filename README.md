@@ -5,6 +5,7 @@
 
 **AvoidBlackout** è un'integrazione intelligente per Home Assistant progettata per prevenire il distacco del contatore elettrico per sovraccarico. Monitora in tempo reale i consumi della tua casa e scollega automaticamente i carichi non prioritari quando ti avvicini alla soglia limite.
 
+![Card Preview](/assets/card-carichi-off.png)
 ---
 
 ## ✨ Caratteristiche Principali
@@ -18,15 +19,17 @@
 
 ---
 
-## 📸 Interfaccia Grafica
+## Interfaccia Grafica
 
 L'integrazione include una **Custom Card** moderna che si adatta automaticamente al tema di Home Assistant:
 
-![Card Preview](https://raw.githubusercontent.com/davpirelli/avoidblackout/main/preview_card.png) *(Esempio)*
+![Card Preview](/assets/card.png)
+![Card Preview](/assets/card-carichi-off.png)
+![Card Preview](/assets/animation.gif)
 
 ---
 
-## 🚀 Installazione via HACS
+## Installazione via HACS
 
 1. Apri **HACS** in Home Assistant.
 2. Vai su **Integrazioni** e clicca sui tre puntini in alto a destra.
@@ -37,7 +40,7 @@ L'integrazione include una **Custom Card** moderna che si adatta automaticamente
 
 ---
 
-## ⚙️ Configurazione
+## Configurazione
 
 Dopo l'installazione, aggiungi l'integrazione dalla pagina **Impostazioni > Dispositivi e Servizi**:
 
@@ -63,7 +66,7 @@ name: "Monitor Energetico" # Opzionale
 
 ## Blueprint (Notifiche)
 
-Abbiamo incluso un Blueprint per semplificare la creazione di automazioni che ti avvisano quando inizia un distacco carichi:
+Ho incluso un Blueprint per semplificare la creazione di automazioni che ti avvisano quando inizia un distacco carichi:
 
 1. Vai in **Impostazioni > Automazioni e Scene > Blueprint**.
 2. Cerca **Load Shedding Notification (AvoidBlackout)**.

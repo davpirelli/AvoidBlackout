@@ -1,4 +1,59 @@
 {
+    "config": {
+        "step": {
+            "user": {
+                "title": "Benvenuto in AvoidBlackout",
+                "description": "Proteggi la tua rete elettrica gestendo i carichi in eccesso.\n\nVuoi attivare la Modalità Test (test_mode)? In questa modalità i dispositivi non verranno realmente spenti, ma riceverai solo le notifiche.",
+                "data": {
+                    "test_mode": "Modalità Test"
+                }
+            },
+            "sensors": {
+                "title": "Sensori di Potenza",
+                "description": "Seleziona i sensori che misurano la potenza totale consumata (W). Puoi selezionarne più di uno, verranno sommati.",
+                "data": {
+                    "power_sensors": "Sensori di Potenza"
+                }
+            },
+            "threshold": {
+                "title": "Soglia e Debounce",
+                "description": "Imposta il limite massimo di potenza e il tempo di attesa prima di intervenire.",
+                "data": {
+                    "max_threshold": "Soglia Massima (W)",
+                    "debounce_time": "Tempo di Debounce (s)"
+                }
+            },
+            "devices": {
+                "title": "Dispositivi da Gestire",
+                "description": "Seleziona i dispositivi da spegnere in ordine di priorità (il primo della lista verrà spento per primo).",
+                "data": {
+                    "managed_entities": "Dispositivi in ordine di priorità"
+                }
+            }
+        },
+        "error": {
+            "invalid_power_sensors": "Uno o più sensori selezionati non sono validi.",
+            "no_devices_selected": "Devi selezionare almeno un dispositivo da gestire.",
+            "threshold_invalid": "Soglia non valida.",
+            "debounce_invalid": "Tempo di debounce non valido.",
+            "cannot_connect": "Impossibile connettersi.",
+            "unknown": "Errore sconosciuto."
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Configura AvoidBlackout",
+                "data": {
+                    "power_sensors": "Sensori di Potenza",
+                    "max_threshold": "Soglia Massima (W)",
+                    "debounce_time": "Tempo di Debounce (s)",
+                    "managed_entities": "Dispositivi gestiti",
+                    "test_mode": "Modalità Test"
+                }
+            }
+        }
+    },
     "entity": {
         "sensor": {
             "avoidblackout_status": {

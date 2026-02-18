@@ -1,4 +1,59 @@
 {
+    "config": {
+        "step": {
+            "user": {
+                "title": "Welcome to AvoidBlackout",
+                "description": "Protect your electrical network by managing excess loads.\n\nDo you want to enable Test Mode (test_mode)? In this mode, devices will not actually be turned off, but you will receive notifications only.",
+                "data": {
+                    "test_mode": "Test Mode"
+                }
+            },
+            "sensors": {
+                "title": "Power Sensors",
+                "description": "Select the sensors that measure total power consumption (W). You can select multiple sensors; their values will be summed.",
+                "data": {
+                    "power_sensors": "Power Sensors"
+                }
+            },
+            "threshold": {
+                "title": "Threshold and Debounce",
+                "description": "Set the maximum power limit and the wait time before intervention.",
+                "data": {
+                    "max_threshold": "Max Threshold (W)",
+                    "debounce_time": "Debounce Time (s)"
+                }
+            },
+            "devices": {
+                "title": "Devices to Manage",
+                "description": "Select the devices to turn off in order of priority (the first one in the list will be turned off first).",
+                "data": {
+                    "managed_entities": "Devices in priority order"
+                }
+            }
+        },
+        "error": {
+            "invalid_power_sensors": "One or more selected sensors are invalid.",
+            "no_devices_selected": "You must select at least one device to manage.",
+            "threshold_invalid": "Invalid threshold.",
+            "debounce_invalid": "Invalid debounce time.",
+            "cannot_connect": "Cannot connect.",
+            "unknown": "Unknown error."
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Configure AvoidBlackout",
+                "data": {
+                    "power_sensors": "Power Sensors",
+                    "max_threshold": "Max Threshold (W)",
+                    "debounce_time": "Debounce Time (s)",
+                    "managed_entities": "Managed devices",
+                    "test_mode": "Test Mode"
+                }
+            }
+        }
+    },
     "entity": {
         "sensor": {
             "avoidblackout_status": {
