@@ -163,20 +163,24 @@ class AvoidBlackoutCard extends HTMLElement {
   }
 }
 
-customElements.define("avoidblackout-card", AvoidBlackoutCard);
+// Registrazione elemento custom con controllo per evitare duplicati
+if (!customElements.get("avoidblackout-card")) {
+  customElements.define("avoidblackout-card", AvoidBlackoutCard);
+}
 
 // Registrazione nel selettore delle card
 window.customCards = window.customCards || [];
 
-// Nota: per la registrazione usiamo l'italiano come default o rileviamo la lingua se possibile, 
-// ma window.customCards di solito viene popolato all'avvio.
 const lang = (navigator.language || "en").split("-")[0];
 const t = TRANSLATIONS[lang] || TRANSLATIONS["en"];
 
-window.customCards.push({
-  type: "avoidblackout-card",
-  name: t.card_name,
-  description: t.card_description,
-  preview: true,
-});
+// Verifica che non sia già presente per evitare duplicati nel selettore
+if (!window.customCards.some(card => card.type === "avoidblackout-card")) {
+  window.customCards.push({
+    type: "avoidblackout-card",
+    name: "AvoidBlackout Card", // Cambiato da Monitor a Card per coerenza con README
+    description: t.card_description,
+    preview: true,
+  });
+}
 
