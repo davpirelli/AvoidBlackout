@@ -9,7 +9,7 @@
 Protect your home from circuit breaker trips — automatically.
 
 [![HACS Badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
-![Version](https://img.shields.io/badge/version-1.1.0-orange.svg?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-1.1.1-orange.svg?style=for-the-badge)
 ![HA](https://img.shields.io/badge/Home%20Assistant-2024.1+-blue.svg?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge)
 
