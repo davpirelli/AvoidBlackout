@@ -10,6 +10,10 @@ from homeassistant.helpers.typing import ConfigType
 
 from homeassistant.const import CONF_NAME, Platform
 from .const import (
+    CONF_DEBOUNCE_TIME,
+    CONF_MANAGED_ENTITIES,
+    CONF_MAX_THRESHOLD,
+    CONF_POWER_SENSORS,
     CONF_TEST_MODE,
     DOMAIN,
     SERVICE_SIMULATE_OVERLOAD,
@@ -20,7 +24,7 @@ from .power_manager import PowerManager
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.NUMBER]
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -164,14 +168,91 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Ricarica l'integrazione quando le options cambiano.
+    """Listener smart per aggiornamenti delle opzioni/dati della config entry.
+
+    Applica in tempo reale le modifiche che non richiedono restart (soglia, debounce).
+    Esegue un reload completo solo se cambiano elementi strutturali
+    (sensori di potenza, dispositivi gestiti, modalità test).
 
     Args:
         hass: Istanza Home Assistant
         entry: Config entry modificata
     """
-    _LOGGER.info("Reload integrazione AvoidBlackout per entry %s", entry.entry_id)
-    await hass.config_entries.async_reload(entry.entry_id)
+    data = hass.data.get(DOMAIN, {}).get(entry.entry_id)
+
+    if not data:
+        # Nessun dato in memoria → ricarica normalmente
+        _LOGGER.warning("Nessun dato in memoria per entry %s, ricarico", entry.entry_id)
+        await hass.config_entries.async_reload(entry.entry_id)
+        return
+
+    new_config = {**entry.data, **entry.options}
+    old_config = data["config"]
+
+    # Trova le chiavi cambiate
+    all_keys = set(new_config.keys()) | set(old_config.keys())
+    changed_keys = {k for k in all_keys if new_config.get(k) != old_config.get(k)}
+
+    if not changed_keys:
+        _LOGGER.debug("Listener opzioni: nessuna modifica rilevata")
+        return
+
+    _LOGGER.debug("Listener opzioni: chiavi modificate = %s", changed_keys)
+
+    # Chiavi che richiedono reload completo (cambiano la struttura del sistema)
+    reload_required_keys = {CONF_POWER_SENSORS, CONF_MANAGED_ENTITIES, CONF_TEST_MODE}
+    needs_reload = changed_keys & reload_required_keys
+
+    if needs_reload:
+        _LOGGER.info(
+            "Reload completo richiesto per → %s",
+            needs_reload,
+        )
+        await hass.config_entries.async_reload(entry.entry_id)
+        return
+
+    # --- Applicazione in-place senza restart ---
+    coordinator = data["coordinator"]
+    manager = data["manager"]
+
+    if CONF_MAX_THRESHOLD in changed_keys:
+        new_threshold = int(new_config[CONF_MAX_THRESHOLD])
+
+        # Controlla se la modifica viene già applicata dal number entity
+        # (flag impostato da AvoidBlackoutThresholdNumber.async_set_native_value)
+        from_entity = data.pop("_updating_threshold", False)
+
+        if not from_entity:
+            # Modifica dall'options flow → applica al coordinator e manager
+            coordinator.update_threshold(new_threshold)
+            manager.update_threshold(new_threshold)
+
+        # Aggiorna il number entity per tenerlo sincronizzato (se non è stato lui a cambiare)
+        threshold_entity = data.get("threshold_entity")
+        if threshold_entity:
+            threshold_entity.async_refresh_from_config(new_threshold)
+
+        data["config"][CONF_MAX_THRESHOLD] = new_threshold
+        _LOGGER.info("Soglia aggiornata in-place: %dW (da_entity=%s)", new_threshold, from_entity)
+
+    if CONF_DEBOUNCE_TIME in changed_keys:
+        new_debounce = int(new_config[CONF_DEBOUNCE_TIME])
+
+        # Controlla se la modifica viene già applicata dal debounce entity
+        from_entity = data.pop("_updating_debounce", False)
+
+        if not from_entity:
+            # Modifica dall'options flow → applica al manager
+            manager.update_debounce(new_debounce)
+
+        # Aggiorna il debounce entity per tenerlo sincronizzato
+        debounce_entity = data.get("debounce_entity")
+        if debounce_entity:
+            debounce_entity.async_refresh_from_config(new_debounce)
+
+        data["config"][CONF_DEBOUNCE_TIME] = new_debounce
+        _LOGGER.info("Debounce aggiornato in-place: %ds (da_entity=%s)", new_debounce, from_entity)
+
 
 
 async def _async_register_services(

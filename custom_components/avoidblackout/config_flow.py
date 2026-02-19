@@ -374,6 +374,7 @@ class AvoidBlackoutOptionsFlow(config_entries.OptionsFlow):
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Inizializza l'options flow."""
         self._config_entry = config_entry
+        self._user_input_cache: dict[str, Any] | None = None
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -400,28 +401,39 @@ class AvoidBlackoutOptionsFlow(config_entries.OptionsFlow):
             threshold_valid, _ = AvoidBlackoutConfigFlow._validate_threshold(threshold)
             debounce_valid, _ = AvoidBlackoutConfigFlow._validate_debounce(debounce)
             
-            devices_valid = True
-            if not devices:
-                devices_valid = False
-                
+            # Devices validation
+            devices_valid = len(devices) > 0
+            
+            # Gestione Reorder (prioritaria)
+            if user_input.get("reorder_devices"):
+                self._user_input_cache = user_input
+                return await self.async_step_reorder()
+            
+            # Se tutto valido, salva
             if sensors_valid and threshold_valid and debounce_valid and devices_valid:
-                # Aggiorna options
                 _LOGGER.info(
                     "Configurazione aggiornata: soglia=%dW, debounce=%ds",
                     threshold,
                     debounce,
                 )
                 return self.async_create_entry(title="", data=user_input)
+
+            # Gestione Errori
+            if not sensors_valid:
+                errors["base"] = ERROR_INVALID_POWER_SENSORS
+            elif not threshold_valid:
+                errors["base"] = "threshold_invalid"
+            elif not debounce_valid:
+                errors["base"] = "debounce_invalid"
+            elif not devices_valid:
+                errors["base"] = ERROR_NO_DEVICES_SELECTED
             else:
-                if not sensors_valid:
-                    errors["base"] = ERROR_INVALID_POWER_SENSORS
-                elif not devices_valid:
-                    errors["base"] = ERROR_NO_DEVICES_SELECTED
-                else:
-                    errors["base"] = "invalid_input"
+                errors["base"] = "invalid_input"
 
         # Schema per modificare TUTTI i parametri
         current_config = {**self.config_entry.data, **self.config_entry.options}
+        if self._user_input_cache:
+             current_config.update(self._user_input_cache)
 
         data_schema = vol.Schema(
             {
@@ -471,6 +483,10 @@ class AvoidBlackoutOptionsFlow(config_entries.OptionsFlow):
                     CONF_TEST_MODE,
                     default=current_config.get(CONF_TEST_MODE, DEFAULT_TEST_MODE),
                 ): selector.BooleanSelector(),
+                vol.Optional(
+                    "reorder_devices",
+                    default=False,
+                ): selector.BooleanSelector(),
             }
         )
 
@@ -478,4 +494,78 @@ class AvoidBlackoutOptionsFlow(config_entries.OptionsFlow):
             step_id="init",
             data_schema=data_schema,
             errors=errors,
+        )
+
+    async def async_step_reorder(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.FlowResult:
+        """Gestisce il riordino dei dispositivi tramite slot."""
+        errors = {}
+        
+        # Recupera la lista corrente (da cache o config)
+        if self._user_input_cache:
+            current_devices = self._user_input_cache.get(CONF_MANAGED_ENTITIES, [])
+        else:
+            current_devices = self.config_entry.options.get(
+                CONF_MANAGED_ENTITIES, 
+                self.config_entry.data.get(CONF_MANAGED_ENTITIES, [])
+            )
+            
+        if user_input is not None:
+            # Ricostruisci la lista ordinata
+            new_order = []
+            selected_set = set()
+            
+            # Itera sugli slot pos_0, pos_1, ecc.
+            for i in range(len(current_devices)):
+                key = f"pos_{i}"
+                if key in user_input:
+                    entity = user_input[key]
+                    if entity in selected_set:
+                        errors["base"] = "duplicate_device"
+                        break
+                    new_order.append(entity)
+                    selected_set.add(entity)
+            
+            if not errors:
+                # Verifica che tutti i dispositivi siano stati assegnati
+                if len(new_order) != len(current_devices):
+                     errors["base"] = "missing_devices"
+                else:
+                    # Aggiorna la cache e salva
+                    final_data = self._user_input_cache.copy()
+                    final_data[CONF_MANAGED_ENTITIES] = new_order
+                    # Rimuovi flag temporaneo se presente
+                    if "reorder_devices" in final_data:
+                        del final_data["reorder_devices"]
+                        
+                    return self.async_create_entry(title="", data=final_data)
+
+        # Prepara le opzioni per i selettori. 
+        # Usiamo SelectSelector che accetta label/value.
+        options = []
+        for entity_id in current_devices:
+            # Cerca il friendly name se disponibile
+            state = self.hass.states.get(entity_id)
+            name = state.name if state else entity_id
+            options.append(selector.SelectOptionDict(label=name + f" ({entity_id})", value=entity_id))
+            
+        # Crea schema con N slot
+        schema_dict = {}
+        for i, entity_id in enumerate(current_devices):
+            schema_dict[vol.Required(f"pos_{i}", default=entity_id)] = selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=options,
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                    multiple=False
+                )
+            )
+
+        return self.async_show_form(
+            step_id="reorder",
+            data_schema=vol.Schema(schema_dict),
+            errors=errors,
+            description_placeholders={
+                "count": str(len(current_devices))
+            }
         )

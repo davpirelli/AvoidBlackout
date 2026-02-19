@@ -37,7 +37,8 @@
             "threshold_invalid": "Soglia non valida.",
             "debounce_invalid": "Tempo di debounce non valido.",
             "cannot_connect": "Impossibile connettersi.",
-            "unknown": "Errore sconosciuto."
+            "unknown": "Errore sconosciuto.",
+            "invalid_input": "Dati non validi."
         }
     },
     "options": {
@@ -63,6 +64,14 @@
                     "waiting": "In attesa",
                     "shedding": "Scollegamento carichi"
                 }
+            }
+        },
+        "number": {
+            "max_threshold": {
+                "name": "Soglia Massima"
+            },
+            "debounce_time": {
+                "name": "Tempo di Debounce"
             }
         }
     }

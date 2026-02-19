@@ -81,14 +81,34 @@ class PowerManager:
         for update_callback in self._listeners:
             update_callback()
 
+
+    def update_threshold(self, new_threshold: int) -> None:
+        """Aggiorna la soglia massima in tempo reale senza riavvio.
+
+        Args:
+            new_threshold: Nuova soglia in Watt
+        """
+        old = self._threshold
+        self._threshold = new_threshold
         _LOGGER.info(
-            "PowerManager inizializzato: soglia=%dW, debounce=%ds, dispositivi=%d, test_mode=%s",
-            self._threshold,
-            self._debounce_time,
-            len(self._managed_entities),
-            self._test_mode,
+            "PowerManager: soglia aggiornata %dW → %dW",
+            old,
+            new_threshold,
         )
 
+    def update_debounce(self, new_debounce: int) -> None:
+        """Aggiorna il tempo di debounce in tempo reale senza riavvio.
+
+        Args:
+            new_debounce: Nuovo debounce in secondi
+        """
+        old = self._debounce_time
+        self._debounce_time = new_debounce
+        _LOGGER.info(
+            "PowerManager: debounce aggiornato %ds → %ds",
+            old,
+            new_debounce,
+        )
 
     async def async_start(self) -> None:
         """Avvia il PowerManager registrando listener sul coordinator e sui device."""

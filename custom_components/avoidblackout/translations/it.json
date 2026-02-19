@@ -37,7 +37,9 @@
             "threshold_invalid": "Soglia non valida.",
             "debounce_invalid": "Tempo di debounce non valido.",
             "cannot_connect": "Impossibile connettersi.",
-            "unknown": "Errore sconosciuto."
+            "unknown": "Errore sconosciuto.",
+            "duplicate_device": "Dispositivo selezionato più volte. Seleziona ogni dispositivo una sola volta.",
+            "missing_devices": "Mancano dei dispositivi."
         }
     },
     "options": {
@@ -49,9 +51,18 @@
                     "max_threshold": "Soglia Massima (W)",
                     "debounce_time": "Tempo di Debounce (s)",
                     "managed_entities": "Dispositivi gestiti",
-                    "test_mode": "Modalità Test"
+                    "test_mode": "Modalità Test",
+                    "reorder_devices": "Riordina la priorità dei dispositivi"
                 }
+            },
+            "reorder": {
+                "title": "Riordina Priorità",
+                "description": "Assegna la posizione di priorità a ciascun dispositivo. Il dispositivo in posizione 0 sarà il primo ad essere spento.\nHai {count} dispositivi da assegnare."
             }
+        },
+        "error": {
+            "duplicate_device": "Dispositivo selezionato più volte. Seleziona ogni dispositivo una sola volta.",
+            "missing_devices": "Tutti i dispositivi devono essere assegnati."
         }
     },
     "entity": {
@@ -63,6 +74,14 @@
                     "waiting": "In attesa",
                     "shedding": "Scollegamento carichi"
                 }
+            }
+        },
+        "number": {
+            "max_threshold": {
+                "name": "Soglia Massima"
+            },
+            "debounce_time": {
+                "name": "Tempo di Debounce"
             }
         }
     }

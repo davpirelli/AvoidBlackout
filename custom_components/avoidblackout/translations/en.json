@@ -37,7 +37,9 @@
             "threshold_invalid": "Invalid threshold.",
             "debounce_invalid": "Invalid debounce time.",
             "cannot_connect": "Cannot connect.",
-            "unknown": "Unknown error."
+            "unknown": "Unknown error.",
+            "duplicate_device": "Duplicate device selected. Select each device only once.",
+            "missing_devices": "You must assign all devices."
         }
     },
     "options": {
@@ -49,9 +51,18 @@
                     "max_threshold": "Max Threshold (W)",
                     "debounce_time": "Debounce Time (s)",
                     "managed_entities": "Managed devices",
-                    "test_mode": "Test Mode"
+                    "test_mode": "Test Mode",
+                    "reorder_devices": "Reorder Device Priority"
                 }
+            },
+            "reorder": {
+                "title": "Reorder Priority",
+                "description": "Assign priority position for each device. The device at position 0 will be the first to be turned off.\nYou have {count} devices to assign."
             }
+        },
+        "error": {
+            "duplicate_device": "Duplicate device selected. Select each device only once.",
+            "missing_devices": "All devices must be assigned."
         }
     },
     "entity": {
@@ -63,6 +74,14 @@
                     "waiting": "Waiting",
                     "shedding": "Shedding"
                 }
+            }
+        },
+        "number": {
+            "max_threshold": {
+                "name": "Max Threshold"
+            },
+            "debounce_time": {
+                "name": "Debounce Time"
             }
         }
     }
