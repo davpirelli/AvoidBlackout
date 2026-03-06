@@ -1,1 +1,9 @@
+# macOS
 .DS_Store
+
+# Claude
+.claude/
+CLAUDE.md
+
+# MCP
+.mcp.json
