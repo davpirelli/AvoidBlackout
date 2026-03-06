@@ -6,6 +6,7 @@
   ],
   "config_flow": true,
   "documentation": "https://github.com/davpirelli/avoidblackout",
+  "issue_tracker": "https://github.com/davpirelli/AvoidBlackout/issues",
   "iot_class": "local_push",
   "version": "1.1.2",
   "requirements": [],
