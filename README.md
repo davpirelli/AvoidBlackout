@@ -23,7 +23,7 @@ Protect your home from circuit breaker trips — automatically.
 
 | Normal State | Shedding Active |
 |:---:|:---:|
-| <img src="assets/card.png" alt="Card Preview" width="340"/> | <img src="assets/card-carichi-off.png" alt="Card Offload" width="340"/> |
+| <img src="https://github.com/davpirelli/AvoidBlackout/blob/main/assets/card.png?raw=true" alt="Card Preview" width="340"/> | <img src="https://github.com/davpirelli/AvoidBlackout/blob/main/assets/card-carichi-off.png?raw=true" alt="Card Offload" width="340"/> |
 
 </div>
 
@@ -121,7 +121,7 @@ name: "Energy Monitor"  # Optional
 ```
 
 <div align="center">
-<img src="assets/animation.gif" alt="Card Animation" width="500"/>
+<img src="https://github.com/davpirelli/AvoidBlackout/blob/main/assets/animation.gif?raw=true" alt="Card Animation" width="500"/>
 </div>
 
 ---
