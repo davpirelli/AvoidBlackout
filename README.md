@@ -9,7 +9,6 @@
 Protect your home from circuit breaker trips — automatically.
 
 [![HACS Badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
-![Version](https://img.shields.io/badge/version-1.1.1-orange.svg?style=for-the-badge)
 ![HA](https://img.shields.io/badge/Home%20Assistant-2024.1+-blue.svg?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge)
 
@@ -23,7 +22,7 @@ Protect your home from circuit breaker trips — automatically.
 
 | Normal State | Shedding Active |
 |:---:|:---:|
-| <img src="https://github.com/davpirelli/AvoidBlackout/blob/main/assets/card.png?raw=true" alt="Card Preview" width="340"/> | <img src="https://github.com/davpirelli/AvoidBlackout/blob/main/assets/card-carichi-off.png?raw=true" alt="Card Offload" width="340"/> |
+| <img src="assets/card.png" alt="Card Preview" width="340"/> | <img src="assets/card-carichi-off.png" alt="Card Offload" width="340"/> |
 
 </div>
 
@@ -121,7 +120,7 @@ name: "Energy Monitor"  # Optional
 ```
 
 <div align="center">
-<img src="https://github.com/davpirelli/AvoidBlackout/blob/main/assets/animation.gif?raw=true" alt="Card Animation" width="500"/>
+<img src="assets/animation.gif" alt="Card Animation" width="500"/>
 </div>
 
 ---
@@ -164,6 +163,8 @@ triggers:
 ---
 
 ## 📄 Changelog
+
+**v1.1.3** — Fixed "Custom element doesn't exist" error on startup by adding `frontend` and `http` dependencies.
 
 See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 

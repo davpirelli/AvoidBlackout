@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.3] - 2026-03-09
+
+### Fixed
+- Added `frontend` and `http` to `manifest.json` dependencies to fix "Custom element doesn't exist: avoidblackout-card" error caused by a race condition during Home Assistant startup.
+- Aligned JS version parameter in `__init__.py` with the actual manifest version.
+
+---
+
 ## [1.1.0] - 2026-02-19
 
 ### Added
@@ -53,7 +61,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/davpirelli/avoidblackout/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/davpirelli/avoidblackout/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/davpirelli/avoidblackout/compare/v1.1.0...v1.1.3
 [1.1.0]: https://github.com/davpirelli/avoidblackout/compare/v1.0.6...v1.1.0
 [1.0.6]: https://github.com/davpirelli/avoidblackout/compare/v1.0.0...v1.0.6
 [1.0.0]: https://github.com/davpirelli/avoidblackout/releases/tag/v1.0.0
