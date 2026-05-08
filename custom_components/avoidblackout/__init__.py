@@ -61,15 +61,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     static_path = "/avoidblackout_static"
     local_path = os.path.join(os.path.dirname(__file__), "www")
     
-    # Registrazione del percorso statico (compatibile con vecchie e nuove versioni di HA)
-    if hasattr(hass.http, "register_static_path"):
-        hass.http.register_static_path(static_path, local_path)
-    else:
-        # Fallback per versioni HA 2024.12+ 
-        from homeassistant.components.http import StaticPathConfig
-        await hass.http.async_register_static_paths([
-            StaticPathConfig(static_path, local_path, True)
-        ])
+    # Registrazione del percorso statico tramite API async (HA 2024.7+).
+    # L'API sincrona register_static_path è deprecata e su alcune versioni non
+    # garantisce che il file sia servito prima del primo render della dashboard,
+    # causando l'errore "Custom element not found: avoidblackout-card" al refresh.
+    from homeassistant.components.http import StaticPathConfig
+    await hass.http.async_register_static_paths([
+        StaticPathConfig(static_path, local_path, True)
+    ])
     
     # Aggiunge la card al frontend con un parametro versione per forzare il refresh della cache browser
     version = "1.1.3" # Dovrebbe corrispondere al manifest
