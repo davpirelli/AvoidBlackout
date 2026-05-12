@@ -71,8 +71,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     ])
     
     # Aggiunge la card al frontend con un parametro versione per forzare il refresh della cache browser
-    version = "1.2.0" # Dovrebbe corrispondere al manifest
-    add_extra_js_url(hass, f"{static_path}/avoidblackout-card.js?v={version}")
+    version = "1.2.1" # Dovrebbe corrispondere al manifest
+    card_url = f"{static_path}/avoidblackout-card.js?v={version}"
+    add_extra_js_url(hass, card_url)
+
+    # Registra la card anche come Lovelace dashboard resource.
+    # add_extra_js_url da solo non garantisce che lo script sia eseguito PRIMA
+    # del primo render della dashboard al refresh: Lovelace tenta di istanziare
+    # avoidblackout-card mentre il browser sta ancora scaricando il JS, causando
+    # "Custom element doesn't exist". Registrando come resource di Lovelace, lo
+    # script viene caricato in modo bloccante prima del bootstrap della dashboard.
+    await _async_register_lovelace_resource(hass, card_url)
 
     # 2. Continua con il setup normale
     # Recupera configurazione unendo data e options
@@ -115,6 +124,68 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     return True
+
+
+async def _async_register_lovelace_resource(hass: HomeAssistant, url: str) -> None:
+    """Registra il JS della card come Lovelace dashboard resource.
+
+    Aggiunge (o aggiorna) una resource di tipo `module` puntando all'URL della
+    card. Funziona solo per dashboard Lovelace in modalità storage (default UI).
+    Per dashboard in modalità YAML l'utente deve aggiungere manualmente la
+    resource nel `configuration.yaml`. Idempotente: aggiorna l'URL esistente
+    se già presente (gestisce cambi di versione nel query string).
+    """
+    try:
+        # lovelace_data contiene la dashboard storage collection
+        lovelace_data = hass.data.get("lovelace")
+        if lovelace_data is None:
+            _LOGGER.debug("Lovelace non ancora pronto, skip registrazione resource")
+            return
+
+        # Accesso compatibile con strutture HA recenti (dataclass) e legacy (dict)
+        resources = getattr(lovelace_data, "resources", None)
+        if resources is None and isinstance(lovelace_data, dict):
+            resources = lovelace_data.get("resources")
+
+        if resources is None:
+            _LOGGER.debug("Lovelace resources non disponibili, skip")
+            return
+
+        # Carica lista resources se non già fatto
+        if hasattr(resources, "async_load") and not getattr(resources, "loaded", True):
+            await resources.async_load()
+
+        # URL base senza query string per match (la version cambia tra release)
+        base_url = url.split("?")[0]
+        existing = None
+        for item in resources.async_items():
+            item_url = item.get("url", "")
+            if item_url.split("?")[0] == base_url:
+                existing = item
+                break
+
+        if existing:
+            # Aggiorna URL solo se diverso (cambio versione → cache bust)
+            if existing.get("url") != url:
+                await resources.async_update_item(
+                    existing["id"], {"url": url, "res_type": "js"}
+                )
+                _LOGGER.info("Lovelace resource aggiornata: %s", url)
+            else:
+                _LOGGER.debug("Lovelace resource già presente e aggiornata: %s", url)
+        else:
+            await resources.async_create_item({"url": url, "res_type": "js"})
+            _LOGGER.info("Lovelace resource creata: %s", url)
+
+    except Exception as err:
+        # Non bloccare il setup se la registrazione resource fallisce
+        # (es. dashboard YAML mode): add_extra_js_url copre comunque il caso base.
+        _LOGGER.warning(
+            "Impossibile registrare Lovelace resource (%s). "
+            "Fallback su add_extra_js_url. Errore: %s",
+            url,
+            err,
+        )
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

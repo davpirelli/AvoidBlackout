@@ -8,7 +8,7 @@
   "documentation": "https://github.com/davpirelli/avoidblackout",
   "issue_tracker": "https://github.com/davpirelli/AvoidBlackout/issues",
   "iot_class": "local_push",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "requirements": [],
   "dependencies": ["frontend", "http"],
   "after_dependencies": [
