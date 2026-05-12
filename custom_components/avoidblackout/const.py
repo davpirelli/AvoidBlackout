@@ -27,6 +27,11 @@ STATE_TEST_MODE = "test_mode"
 # Attributi per verificare sensori di potenza validi
 POWER_UNIT_OF_MEASUREMENT = "W"
 
+# Soglia minima in Watt sotto la quale un dispositivo è considerato "non in uso"
+# e viene saltato durante il load shedding (evita di spegnere device a 0W mentre
+# device successivi nella lista priorità stanno consumando).
+DEVICE_IDLE_POWER_THRESHOLD = 10
+
 # Service names
 SERVICE_SIMULATE_OVERLOAD = "simulate_overload"
 SERVICE_RESET_HISTORY = "reset_history"

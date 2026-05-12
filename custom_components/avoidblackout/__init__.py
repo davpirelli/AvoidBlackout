@@ -71,7 +71,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     ])
     
     # Aggiunge la card al frontend con un parametro versione per forzare il refresh della cache browser
-    version = "1.1.5" # Dovrebbe corrispondere al manifest
+    version = "1.2.0" # Dovrebbe corrispondere al manifest
     add_extra_js_url(hass, f"{static_path}/avoidblackout-card.js?v={version}")
 
     # 2. Continua con il setup normale

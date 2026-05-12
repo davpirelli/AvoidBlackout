@@ -11,12 +11,15 @@ from .const import (
     CONF_MANAGED_ENTITIES,
     CONF_MAX_THRESHOLD,
     CONF_TEST_MODE,
+    DEVICE_IDLE_POWER_THRESHOLD,
     EVENT_LOAD_SHEDDING,
+    POWER_UNIT_OF_MEASUREMENT,
     STATE_MONITORING,
     STATE_SHEDDING,
     STATE_WAITING,
 )
 from .coordinator import PowerCoordinator
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_state_change_event
 
 _LOGGER = logging.getLogger(__name__)
@@ -61,6 +64,11 @@ class PowerManager:
 
         self._unsub_coordinator = None
         self._unsub_entities = None
+
+        # Mapping switch_entity_id -> power_sensor_entity_id (auto-discovered).
+        # Popolato in async_start tramite entity_registry, usato in _shed_next_load
+        # per saltare dispositivi che non stanno consumando (es. switch ON ma 0W).
+        self._device_power_sensors: dict[str, str] = {}
         
         # ... (omitted)
 
@@ -112,6 +120,9 @@ class PowerManager:
 
     async def async_start(self) -> None:
         """Avvia il PowerManager registrando listener sul coordinator e sui device."""
+        # 0. Auto-discovery dei sensori di potenza associati ai device gestiti
+        self._discover_device_power_sensors()
+
         # 1. Listener aggiornamenti di potenza
         self._unsub_coordinator = self.coordinator.async_add_listener(self._handle_power_update)
         
@@ -288,29 +299,143 @@ class PowerManager:
             _LOGGER.info("Debounce cancellato, potenza rientrata prima della scadenza")
             self._reset_to_monitoring()
 
+    def _discover_device_power_sensors(self) -> None:
+        """Auto-discovery dei sensori di potenza per ogni dispositivo gestito.
+
+        Per ogni switch in _managed_entities, cerca nel registry un sensore
+        appartenente allo stesso device con device_class="power" o unità "W".
+        Il mapping viene salvato in self._device_power_sensors.
+
+        Se un device non ha un sensore di potenza associato, viene loggato un
+        warning ma il sistema continua a funzionare (fallback: spegne comunque).
+        """
+        registry = er.async_get(self.hass)
+        self._device_power_sensors = {}
+
+        for switch_entity_id in self._managed_entities:
+            switch_entry = registry.async_get(switch_entity_id)
+            if switch_entry is None or switch_entry.device_id is None:
+                _LOGGER.debug(
+                    "Switch %s non in registry o senza device_id, skip discovery",
+                    switch_entity_id,
+                )
+                continue
+
+            device_id = switch_entry.device_id
+
+            # Cerca tutte le entità dello stesso device
+            power_sensor_id = None
+            for entry in registry.entities.values():
+                if entry.device_id != device_id:
+                    continue
+                if entry.domain != "sensor":
+                    continue
+
+                # Match per device_class power oppure unità di misura W
+                if entry.device_class == "power" or entry.original_device_class == "power":
+                    power_sensor_id = entry.entity_id
+                    break
+
+                # Fallback: controlla unità di misura dallo stato
+                state = self.hass.states.get(entry.entity_id)
+                if state and state.attributes.get("unit_of_measurement") == POWER_UNIT_OF_MEASUREMENT:
+                    power_sensor_id = entry.entity_id
+                    break
+
+            if power_sensor_id:
+                self._device_power_sensors[switch_entity_id] = power_sensor_id
+                _LOGGER.info(
+                    "Discovery: %s -> sensore potenza %s",
+                    switch_entity_id,
+                    power_sensor_id,
+                )
+            else:
+                _LOGGER.warning(
+                    "Nessun sensore di potenza trovato per %s nel device %s. "
+                    "Verrà spento senza verifica del consumo.",
+                    switch_entity_id,
+                    device_id,
+                )
+
+    def _get_device_power(self, switch_entity_id: str) -> float | None:
+        """Ritorna il consumo corrente in Watt del dispositivo associato allo switch.
+
+        Args:
+            switch_entity_id: ID dello switch gestito
+
+        Returns:
+            Consumo in W, oppure None se il sensore non è disponibile/configurato.
+        """
+        sensor_id = self._device_power_sensors.get(switch_entity_id)
+        if sensor_id is None:
+            return None
+
+        state = self.hass.states.get(sensor_id)
+        if state is None or state.state in ("unknown", "unavailable", None):
+            return None
+
+        try:
+            return float(state.state)
+        except (ValueError, TypeError):
+            _LOGGER.debug("Valore non numerico per %s: %s", sensor_id, state.state)
+            return None
+
     async def _shed_next_load(self) -> None:
         """Spegne il prossimo dispositivo disponibile nella lista priorità.
 
         Scorre la lista dei dispositivi gestiti in ordine di priorità.
-        Il primo dispositivo trovato ACCESO viene spento.
+        Il primo dispositivo trovato ACCESO E che sta effettivamente consumando
+        (>= DEVICE_IDLE_POWER_THRESHOLD Watt) viene spento.
+
+        I device ON ma con consumo trascurabile vengono saltati per evitare di
+        spegnere apparecchi inattivi mentre altri stanno realmente assorbendo.
+        Se nessun sensore di potenza è disponibile per un device, il fallback
+        è il comportamento precedente (spegnimento sulla base del solo stato ON).
         """
         target_entity_id = None
         priority_index = -1
 
-        # Cerca il primo dispositivo acceso
+        # Cerca il primo dispositivo acceso E che sta consumando
         for index, entity_id in enumerate(self._managed_entities):
             state = self.hass.states.get(entity_id)
-            if state and state.state == "on":
-                target_entity_id = entity_id
-                priority_index = index
-                break
-            else:
+            if not state or state.state != "on":
                 _LOGGER.debug(
                     "Dispositivo %s (priorità %d) già spento o non disponibile (stato: %s), passo al prossimo",
                     entity_id,
                     index,
                     state.state if state else "None",
                 )
+                continue
+
+            # Controlla consumo effettivo (se sensore disponibile)
+            power = self._get_device_power(entity_id)
+            if power is not None and power < DEVICE_IDLE_POWER_THRESHOLD:
+                _LOGGER.info(
+                    "Dispositivo %s (priorità %d) acceso ma consumo trascurabile (%.1fW < %dW), salto",
+                    entity_id,
+                    index,
+                    power,
+                    DEVICE_IDLE_POWER_THRESHOLD,
+                )
+                continue
+
+            # Candidato valido: ON + consumando (o nessun sensore = fallback)
+            target_entity_id = entity_id
+            priority_index = index
+            if power is not None:
+                _LOGGER.debug(
+                    "Candidato spegnimento: %s (priorità %d, consumo %.1fW)",
+                    entity_id,
+                    index,
+                    power,
+                )
+            else:
+                _LOGGER.debug(
+                    "Candidato spegnimento: %s (priorità %d, nessun sensore consumo: fallback)",
+                    entity_id,
+                    index,
+                )
+            break
 
         # Se non abbiamo trovato nessun dispositivo da spegnere
         if target_entity_id is None:
