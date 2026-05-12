@@ -163,9 +163,13 @@ class AvoidBlackoutCard extends HTMLElement {
   }
 }
 
-// Registrazione elemento custom con controllo per evitare duplicati
+// Registrazione elemento custom con controllo per evitare duplicati.
+// Se il define avviene DOPO che Lovelace ha tentato di renderizzare la card,
+// HA mostra "Custom element doesn't exist". Dispatch di ll-rebuild forza
+// Lovelace a ricostruire le card che hanno fallito al primo render.
 if (!customElements.get("avoidblackout-card")) {
   customElements.define("avoidblackout-card", AvoidBlackoutCard);
+  window.dispatchEvent(new Event("ll-rebuild"));
 }
 
 // Registrazione nel selettore delle card
